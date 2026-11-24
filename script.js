@@ -30,6 +30,7 @@ quoteForm.addEventListener('submit',event=>{
   const data=Object.fromEntries([...new FormData(quoteForm)].map(([key,value])=>[key,value.trim()]));
   const url=buildQuotationUrl(data);
   if(window.fbq){fbq('track','Lead',{content_name:data.insurance});}
+  if(window.gtag){gtag('event','generate_lead',{seguro:data.insurance});}
   setTimeout(()=>window.location.assign(url),300);
 });
 
@@ -80,4 +81,4 @@ quoteForm.addEventListener('submit',event=>{
 })();
 
 /* Meta Pixel: conta cliques em links do WhatsApp (fora do formulario). */
-document.querySelectorAll('a[href*="wa.me/"]').forEach(link=>link.addEventListener('click',()=>{if(window.fbq)fbq('track','Contact');}));
+document.querySelectorAll('a[href*="wa.me/"]').forEach(link=>link.addEventListener('click',()=>{if(window.fbq)fbq('track','Contact');if(window.gtag)gtag('event','clique_whatsapp');}));
