@@ -1,12 +1,23 @@
-const menuButton=document.querySelector('.menu-button');
+/* Menu */
+const header=document.querySelector('.site-header');
+const menuButton=document.querySelector('.menu');
 const nav=document.querySelector('#nav');
 function closeMenu(){nav.classList.remove('open');menuButton.setAttribute('aria-expanded','false');menuButton.setAttribute('aria-label','Abrir menu');}
-menuButton.addEventListener('click',()=>{const opened=nav.classList.toggle('open');menuButton.setAttribute('aria-expanded',String(opened));menuButton.setAttribute('aria-label',opened?'Fechar menu':'Abrir menu');});
+menuButton.addEventListener('click',()=>{const opened=nav.classList.toggle('open');menuButton.setAttribute('aria-expanded',String(opened));menuButton.setAttribute('aria-label',opened?'Fechar menu':'Abrir menu');header.classList.add('solid');});
 nav.querySelectorAll('a').forEach(link=>link.addEventListener('click',closeMenu));
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&nav.classList.contains('open')){closeMenu();menuButton.focus();}});
-document.querySelectorAll('[data-insurance]').forEach(link=>link.addEventListener('click',()=>{document.querySelector('#insurance').value=link.dataset.insurance;}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.classList.contains('open')){closeMenu();menuButton.focus();}});
+
+/* Header sólido ao rolar */
+function onScroll(){header.classList.toggle('solid',window.scrollY>60||nav.classList.contains('open'));}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+/* Ano */
 document.querySelector('#year').textContent=new Date().getFullYear();
 
+/* Botões que já escolhem o seguro no formulário */
+document.querySelectorAll('[data-insurance]').forEach(link=>link.addEventListener('click',()=>{const s=document.querySelector('#insurance');const v=link.dataset.insurance;if([...s.options].some(o=>o.value===v||o.text===v))s.value=v;}));
+
+/* Formulário de cotação → WhatsApp */
 const quoteForm=document.querySelector('#quotation-form');
 const quotePhone=document.querySelector('#quote-phone');
 function validBrazilianPhone(value){
@@ -18,67 +29,30 @@ function validatePhone(){quotePhone.setCustomValidity(validBrazilianPhone(quoteP
 quotePhone.addEventListener('input',validatePhone);
 quotePhone.addEventListener('blur',validatePhone);
 function buildQuotationUrl(data){
-  const lines=['Olá, Essencial! Gostaria de solicitar uma cotação.','','Seguro: '+data.insurance,'Nome: '+data.name,'WhatsApp: '+data.phone,'Cidade / estado: '+data.city];
+  const lines=['Olá, Essencial! Vim pelo site e quero ver meu valor.','','Seguro: '+data.insurance,'Nome: '+data.name,'WhatsApp: '+data.phone,'Cidade / estado: '+data.city];
   if(data.email)lines.push('E-mail: '+data.email);
-  if(data.details)lines.push('','Sobre minha necessidade:',data.details);
+  if(data.details)lines.push('','Sobre mim:',data.details);
   return 'https://wa.me/5521991959786?text='+encodeURIComponent(lines.join('\n'));
 }
 quoteForm.addEventListener('submit',event=>{
   event.preventDefault();
   validatePhone();
   if(!quoteForm.reportValidity())return;
-  const data=Object.fromEntries([...new FormData(quoteForm)].map(([key,value])=>[key,value.trim()]));
+  const data=Object.fromEntries([...new FormData(quoteForm)].map(([k,v])=>[k,String(v).trim()]));
   const url=buildQuotationUrl(data);
   if(window.fbq){fbq('track','Lead',{content_name:data.insurance});}
   if(window.gtag){gtag('event','generate_lead',{seguro:data.insurance});}
   setTimeout(()=>window.location.assign(url),300);
 });
 
-
-
-/* Essencial: progressively enhanced motion, accessible by design. */
-(function(){
-  const toggle=document.querySelector('.motion-toggle');
-  const root=document.documentElement;
-  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let paused=reduce;
-  if(toggle){
-    toggle.setAttribute('aria-pressed',String(paused));
-    toggle.textContent=paused?'▶ Retomar movimento':'Ⅱ Pausar movimento';
-    toggle.addEventListener('click',()=>{
-      paused=!paused;root.classList.toggle('motion-paused',paused);
-      toggle.setAttribute('aria-pressed',String(paused));
-      toggle.textContent=paused?'▶ Retomar movimento':'Ⅱ Pausar movimento';
-    });
-  }
-  if(reduce||!('IntersectionObserver' in window))return;
-  const elements=document.querySelectorAll('.section-heading,.story,.about-copy,.brand-panel,.manifesto-content,.insurance-card,.steps article,.quotation-copy,.quotation-form,.transparency-grid>div,.faq-grid>div,.contact-grid>div');
-  elements.forEach((el,index)=>{el.dataset.reveal='';el.style.setProperty('--delay',String(index%2*85)+'ms')});
-  const observer=new IntersectionObserver(entries=>{
-    entries.forEach(entry=>{
-      if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}
-    });
-  },{threshold:0.08,rootMargin:'0px 0px -25px 0px'});
-  elements.forEach(el=>observer.observe(el));
-  root.classList.add('motion-enabled');
-  requestAnimationFrame(()=>elements.forEach(el=>{
-    const rect=el.getBoundingClientRect();
-    if(rect.top<innerHeight&&rect.bottom>0){el.classList.add('is-visible');observer.unobserve(el)}
-  }));
-  const visual=document.querySelector('.hero-visual');
-  if(visual&&window.matchMedia('(min-width: 801px)').matches){
-    let scheduled=false;
-    addEventListener('scroll',()=>{
-      if(paused||scheduled)return;
-      scheduled=true;
-      requestAnimationFrame(()=>{
-        const rect=visual.getBoundingClientRect();
-        if(rect.bottom>0&&rect.top<innerHeight)visual.style.setProperty('--shift',Math.max(-18,Math.min(18,-rect.top*.035))+'px');
-        scheduled=false;
-      });
-    },{passive:true});
-  }
-})();
-
-/* Meta Pixel: conta cliques em links do WhatsApp (fora do formulario). */
+/* Cliques no WhatsApp (fora do formulário) */
 document.querySelectorAll('a[href*="wa.me/"]').forEach(link=>link.addEventListener('click',()=>{if(window.fbq)fbq('track','Contact');if(window.gtag)gtag('event','clique_whatsapp');}));
+
+/* Revelar ao rolar */
+(function(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!('IntersectionObserver' in window))return;
+  const els=document.querySelectorAll('.section h2,.steps li,.card,.photo-tall,.feature-content,.form,.facts div,.faq details,.final-content,.strip-head');
+  els.forEach((el,i)=>{el.classList.add('reveal');el.style.transitionDelay=(i%4*70)+'ms';});
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12,rootMargin:'0px 0px -30px 0px'});
+  els.forEach(el=>io.observe(el));
+})();
