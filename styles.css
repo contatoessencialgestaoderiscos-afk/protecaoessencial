@@ -227,3 +227,4 @@ nav a:not(.btn):hover{opacity:1;text-decoration:underline;text-underline-offset:
   .thread path{stroke-dashoffset:0}
   .reveal{opacity:1;transform:none}
 }
+.photo-sede{aspect-ratio:3/4}.photo-sede img{object-position:50% 40%}
